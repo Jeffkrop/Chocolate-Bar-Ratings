@@ -66,6 +66,7 @@ France
 3.75
 </td>
 <td style="text-align:left;">
+NA
 </td>
 <td style="text-align:left;">
 Sao Tome
@@ -94,6 +95,7 @@ France
 2.75
 </td>
 <td style="text-align:left;">
+NA
 </td>
 <td style="text-align:left;">
 Togo
@@ -122,6 +124,7 @@ France
 3.00
 </td>
 <td style="text-align:left;">
+NA
 </td>
 <td style="text-align:left;">
 Togo
@@ -150,6 +153,7 @@ France
 3.50
 </td>
 <td style="text-align:left;">
+NA
 </td>
 <td style="text-align:left;">
 Togo
@@ -178,6 +182,7 @@ France
 3.50
 </td>
 <td style="text-align:left;">
+NA
 </td>
 <td style="text-align:left;">
 Peru
@@ -214,7 +219,7 @@ Venezuela
 </tr>
 </tbody>
 </table>
-I need to remove the % sign in Cocoa.Percent and make it an int. I also want to rename some of the columns to shorter names.
+I need to remove the % sign in Cocoa.Percent and make it an int. I also want to rename some of the columns to shorter names, make some spelling corrections in the bean country origin column and join a file I have tha has the latitiudes an longituds for the capital of each country.
 
 ``` r
 cocoa$Cocoa.Percent<-gsub("%","",cocoa$Cocoa.Percent)
@@ -228,20 +233,18 @@ cocoa <- cocoa %>% rename(company = Company...Maker.if.known.,
                           review_date = Review.Date, 
                           cocoa_percent = Cocoa.Percent, 
                           bean_type = Bean.Type)
+   
+#There is a spelling error in Dominican Republic some are spelled Domincan Republic.
+cocoa$bean_origin_country[ cocoa$bean_origin_country == "Domincan Republic"] <- "Dominican Republic"   
 
-str(cocoa)
+#If I want to join the Lat and lon data I need the countries to match so I need to change Trinidad to Trinidad and Tobago
+cocoa$bean_origin_country[ cocoa$bean_origin_country == "Trinidad"] <- "Trinidad and Tobago" 
+cocoa$bean_origin_country[ cocoa$bean_origin_country == "Burma"] <- "Myanmar"
+
+
+lat_lon <- read.csv("country_lat_lon.txt")   
+cocoa <- left_join(cocoa, lat_lon, by = c("bean_origin_country" = "Country")) %>% select(-c(Capital))
 ```
-
-    ## 'data.frame':    1795 obs. of  9 variables:
-    ##  $ company            : Factor w/ 416 levels "A. Morin","Acalli",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ bean_origin_city   : Factor w/ 1039 levels "\"heirloom\", Arriba Nacional",..: 15 494 68 16 813 175 288 923 805 731 ...
-    ##  $ REF                : int  1876 1676 1676 1680 1704 1315 1315 1315 1319 1319 ...
-    ##  $ review_date        : int  2016 2015 2015 2015 2015 2014 2014 2014 2014 2014 ...
-    ##  $ cocoa_percent      : int  63 70 70 70 70 70 70 70 70 70 ...
-    ##  $ company_location   : Factor w/ 60 levels "Amsterdam","Argentina",..: 19 19 19 19 19 19 19 19 19 19 ...
-    ##  $ Rating             : num  3.75 2.75 3 3.5 3.5 2.75 3.5 3.5 3.75 4 ...
-    ##  $ bean_type          : Factor w/ 41 levels " ","Amazon","Amazon mix",..: 1 1 1 1 1 9 1 9 9 1 ...
-    ##  $ bean_origin_country: Factor w/ 100 levels " ","Africa, Carribean, C. Am.",..: 69 79 79 79 56 92 17 92 92 56 ...
 
 Ok now lets see a distribution of the Ratings.
 
@@ -265,7 +268,9 @@ ggplot(cocoa, aes(x = cocoa_percent)) +
       labs(x = "Percent Cocoa", title = "The Percent of Cocoa in Each Bar", y = "Count")
 ```
 
-![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png) Ok so most companies use around 67-71 percent cocoa in there chocolate bars. The mean is 71.7 and the median is 70
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
+
+Most companies use around 67-71 percent cocoa in there chocolate bars. The mean is 71.7 and the median is 70
 
 There are 416 unique companies in this dataset, lets look at the the 20 companies with the most ratings. Below is a graph of the 20 companies that have the most chocolate ratings.
 
@@ -286,7 +291,7 @@ ggplot(n2, aes(x = reorder(company, count),
 
 ![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
 
-A look at where 20 most represented company location countries.
+There are chocolate companies on this list from 60 different counties. The 20 most represented company location are.
 
 ``` r
 n3 <- cocoa %>% group_by(company_location) %>% 
@@ -303,6 +308,46 @@ ggplot(n3, aes(x = reorder(company_location, count),
                       coord_flip()
 ```
 
-![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-1.png)
 
 That is interesting the United States is while represnted in this dataset. I thought Switzerland, Germany and Belgium would have more chocolate bars rated.
+
+Cocoa beans are growen in 98 different counties in this dataset the top 20 countries represented are.
+
+``` r
+n4 <- cocoa %>% filter(!is.na(bean_origin_country)) %>%
+                group_by(bean_origin_country) %>% 
+                summarise(count = n()) %>% 
+                arrange(desc(count)) %>%
+                top_n(20, wt = count)   
+
+ggplot(n4, aes(x = reorder(bean_origin_country, count),
+               y = count, fill = bean_origin_country)) + 
+                      geom_bar(stat = "identity")  +
+                      geom_text(aes(label = count), vjust = 1, hjust = .5) + 
+                      labs(x = "Companies", y = "Number of Ratings", title = "Companies With the most Ratings") +
+                      theme(legend.position = "none") +
+                      coord_flip()
+```
+
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
+
+8 of the top 10 are in South & central America. I have a dataset that I can join to this one that has the Latitudes and logitudes for the capital of each country around the world. THis will allow me to map some of this data.
+
+``` r
+n5 <- cocoa %>% filter(!is.na(bean_origin_country), !is.na(Latitude)) %>%
+                group_by(bean_origin_country, Latitude, Longitude) %>% 
+                summarise(count = n()) %>% 
+                arrange(desc(count)) 
+
+# Get world map
+world_map <- map_data("world")
+
+# Draw the map and add the data points in myData
+
+ggplot() +
+geom_path(data = world_map, aes(x = long, y = lat, group = group)) +
+geom_point(data = n5, aes(x = Longitude, y = Latitude, size = count), color = "red")
+```
+
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
