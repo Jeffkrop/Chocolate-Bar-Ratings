@@ -248,7 +248,7 @@ cocoa$bean_type[cocoa$bean_type == "Forastero (Arriba) ASS"] <- "Forastero (Arri
 cocoa$bean_type <- gsub("Trinitario, Criollo", "Criollo, Trinitario", cocoa$bean_type)
 ```
 
-Now lets see a distribution of the Ratings.
+#### Now lets see a distribution of the Ratings.
 
 ``` r
 ggplot(cocoa, aes(x = Rating)) +
@@ -261,7 +261,7 @@ ggplot(cocoa, aes(x = Rating)) +
 
 Not bad most in the 2.5 to 4 range. The mean is 3.186 and the median is 3.25
 
-How about the distribution of the amount of cocoa in each chocolate bar.
+#### How about the distribution of the amount of cocoa in each chocolate bar.
 
 ``` r
 ggplot(cocoa, aes(x = cocoa_percent)) +
@@ -274,7 +274,7 @@ ggplot(cocoa, aes(x = cocoa_percent)) +
 
 Most companies use around 67-71 percent cocoa in there chocolate bars. The mean is 71.7 and the median is 70
 
-There are 416 unique companies in this dataset, lets look at the the 20 companies with the most ratings. Below is a graph of the 20 companies that have the most chocolate ratings.
+#### There are 416 unique companies in this dataset, lets look at the the 20 companies with the most ratings. Below is a graph of the 20 companies that have the most chocolate ratings.
 
 ``` r
 n2 <- cocoa %>% group_by(company) %>% 
@@ -293,7 +293,7 @@ ggplot(n2, aes(x = reorder(company, count),
 
 ![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
 
-There are chocolate companies on this list from 60 different counties. The 20 most represented company location are.
+#### There are chocolate companies on this list from 60 different counties. The 20 most represented company location are.
 
 ``` r
 n3 <- cocoa %>% group_by(company_location) %>% 
@@ -339,7 +339,7 @@ theme(plot.title=element_text(size=20))
 
 ![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
 
-Cocoa beans are grown in 98 different counties in this dataset the top 20 countries represented are.
+#### Cocoa beans are grown in 98 different counties in this dataset the top 20 countries represented are.
 
 ``` r
 n4 <- cocoa %>% filter(!is.na(bean_origin_country)) %>%
@@ -386,7 +386,7 @@ theme(plot.title=element_text(size=20))
 
 All cocoa beans are grown in the tropics, most are grown in Central and South America.
 
-I want to see the breakdown of how many rating are in the dataset per year.
+#### I want to see the breakdown of how many rating are in the dataset per year.
 
 ``` r
 n6 <- cocoa %>% group_by(review_date) %>% 
@@ -404,7 +404,7 @@ ggplot(n6, aes(x = review_date, y = count)) +
 
 Not bad to have ten years of data, there is not much data from 2017 but I think this is because the data was retreved in 2017 and the rating were not out for the chocolate that year.
 
-What about bean type, looks like there are three main bean types in this dataset that are not blends. Below is a graph of the distribution.
+#### What about bean type, looks like there are three main bean types in this dataset that are not blends. Below is a graph of the distribution.
 
 ``` r
 n7 <- cocoa %>% filter(!is.na(bean_type)) %>%
@@ -430,10 +430,13 @@ I did some reseach on the 3 types of cocoa bean in this dataset, the Trinitario 
 
 **Criollo** is a rare tree that is native to Central and South America as well as the Caribbean islands and Sri Lanka. Only 5% of the world’s production is Criollo. This makes up 17.77% of the bars in this dataset
 Source ("<https://www.barry-callebaut.com/about-us/media/press-kit/history-chocolate/theobroma-cacao-food-gods>")
+
 **Trinitario** is a natural hybrid biological class resulting from cross-pollination. Legend recounts that it first came into existence on the Island of Trinidad, after a hurricane nearly completely destroyed the local Criollo crops in 1727. Assuming all the trees were dead, the plantations were replanted with Forastero, but spontaneous hybrids appeared. The Trinitario cocoa is the main cocoa in 48.66%
 Source ("<https://www.barry-callebaut.com/about-us/media/press-kit/history-chocolate/theobroma-cacao-food-gods>")
+
 **Forastero** is the most commonly cocoa grown. It is most likely native to the Amazon basin. Today, Forastero is mainly grown in Africa, Ecuador and Brazil and accounts for 80% of the world’s cocoa supply. What makes it so popular is that it is much hardier and less susceptible to diseases. It has a much higher yield than the Criollo variety. Forastero cocoa has purple-coloured beans and is mainly used to give chocolate its full-bodied flavor. The Trinitario cocoa is the main cocoa in 10.1%
 Source ("<https://www.barry-callebaut.com/about-us/media/press-kit/history-chocolate/theobroma-cacao-food-gods>")
+
 **Forastero (Nacional)** is Forastero cocoa that is native to Ecuador, the flavor is very similar to that of other forasteros, with the addition of fruity overtones that other forasteros typically do not have. Source (<http://www.amanochocolate.com/blog/theobroma-cacao-the-tree-of-life-varieties-of-cacao/>)
 
 **Forastero (Arriba)** one of the only Forastero cacao varieties which can be labeled as fino di aroma cacao. Forastero typically is a bean used for industrial bulk chocolate, but Arriba has a much more refined taste allowing chocolate makers to make wonderful bars based on this cacao.
