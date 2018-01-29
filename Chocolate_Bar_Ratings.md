@@ -1,6 +1,6 @@
 Chocolate-Bar-Ratings
 ================
-2018-01-26
+2018-01-29
 
 This is a dataset of 1,700 individual chocolate bars. This dataset has information on their regional origin, percentage of cocoa, the variety of chocolate bean used and where the beans were grown. I think it would be fun to use some R code to take a look at what chocolate bar gets the highest rating over the years, what countries has the highest rated bars and what goes into getting a highly rated chocolate bar.
 
@@ -241,9 +241,7 @@ cocoa$bean_origin_country[ cocoa$bean_origin_country == "Domincan Republic"] <- 
 cocoa$bean_origin_country[ cocoa$bean_origin_country == "Trinidad"] <- "Trinidad and Tobago" 
 cocoa$bean_origin_country[ cocoa$bean_origin_country == "Burma"] <- "Myanmar"
 
-
-lat_lon <- read.csv("country_lat_lon.txt")   
-cocoa <- left_join(cocoa, lat_lon, by = c("bean_origin_country" = "Country")) %>% select(-c(Capital))
+cocoa$company_location<-gsub("U.S.A.","United States",cocoa$company_location)
 ```
 
 Ok now lets see a distribution of the Ratings.
@@ -310,7 +308,32 @@ ggplot(n3, aes(x = reorder(company_location, count),
 
 ![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-1.png)
 
-That is interesting the United States is while represnted in this dataset. I thought Switzerland, Germany and Belgium would have more chocolate bars rated.
+That is interesting the United States is while represnted in this dataset. I thought Switzerland, Germany and Belgium would have more chocolate bars rated. Lets take a quick look at a map of these locations.
+
+``` r
+#Import dataset of latitudes and longitudes for world capitals 
+lat_lon <- read.csv("country_lat_lon.txt") 
+
+company_map <- left_join(cocoa, lat_lon, by = c("company_location" = "Country")) %>% select(-c(Capital))
+
+n4 <- company_map %>% filter(!is.na(company_location), !is.na(Latitude)) %>%
+                      group_by(company_location, Latitude, Longitude) %>% 
+                      summarise(count = n()) %>% 
+                      arrange(desc(count)) 
+
+# Get world map
+world_map <- map_data("world")
+
+# Draw the map and add the data points in myData
+
+ggplot() +
+geom_path(data = world_map, aes(x = long, y = lat, group = group)) +
+geom_point(data = n4, aes(x = Longitude, y = Latitude, size = count), color = "red") +
+ggtitle("Locations of Chocolate Companies") +
+theme(plot.title=element_text(size=20))
+```
+
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
 
 Cocoa beans are growen in 98 different counties in this dataset the top 20 countries represented are.
 
@@ -330,15 +353,21 @@ ggplot(n4, aes(x = reorder(bean_origin_country, count),
                       coord_flip()
 ```
 
-![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
 
 8 of the top 10 are in South & central America. I have a dataset that I can join to this one that has the Latitudes and logitudes for the capital of each country around the world. THis will allow me to map some of this data.
 
 ``` r
-n5 <- cocoa %>% filter(!is.na(bean_origin_country), !is.na(Latitude)) %>%
-                group_by(bean_origin_country, Latitude, Longitude) %>% 
-                summarise(count = n()) %>% 
-                arrange(desc(count)) 
+#Import dataset of latitudes and longitudes for world capitals 
+lat_lon <- read.csv("country_lat_lon.txt") 
+
+origin_map <- left_join(cocoa, lat_lon, by = c("bean_origin_country" = "Country")) %>% select(-c(Capital))
+
+
+n5 <- origin_map %>% filter(!is.na(bean_origin_country), !is.na(Latitude)) %>%
+                     group_by(bean_origin_country, Latitude, Longitude) %>% 
+                     summarise(count = n()) %>% 
+                     arrange(desc(count)) 
 
 # Get world map
 world_map <- map_data("world")
@@ -347,7 +376,9 @@ world_map <- map_data("world")
 
 ggplot() +
 geom_path(data = world_map, aes(x = long, y = lat, group = group)) +
-geom_point(data = n5, aes(x = Longitude, y = Latitude, size = count), color = "red")
+geom_point(data = n5, aes(x = Longitude, y = Latitude, size = count), color = "red") +
+ggtitle("Origin of Cocoa Beans") +
+theme(plot.title=element_text(size=20))
 ```
 
-![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png)

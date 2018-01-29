@@ -51,14 +51,11 @@ cocoa$bean_origin_country[ cocoa$bean_origin_country == "Domincan Republic"] <- 
 cocoa$bean_origin_country[ cocoa$bean_origin_country == "Trinidad"] <- "Trinidad and Tobago" 
 cocoa$bean_origin_country[ cocoa$bean_origin_country == "Burma"] <- "Myanmar"
 
-
-lat_lon <- read.csv("country_lat_lon.txt")   
-cocoa <- left_join(cocoa, lat_lon, by = c("bean_origin_country" = "Country")) %>% select(-c(Capital))
-
+cocoa$company_location<-gsub("U.S.A.","United States",cocoa$company_location)
 ```   
    
 Ok now lets see a distribution of the Ratings.   
-```{r}
+```{r, message=FALSE, warning=FALSE}
 ggplot(cocoa, aes(x = Rating)) +
       geom_histogram(color = "black", fill = "red", binwidth = .25) +
       scale_y_continuous(breaks = seq(0,400,25)) +
@@ -68,7 +65,7 @@ ggplot(cocoa, aes(x = Rating)) +
 Not bad most in the 2.5 to 4 range. The mean is `r round(mean(cocoa$Rating), 3)` and the median is `r round(median(cocoa$Rating), 3)`   
 
 How about the distribution of the amount of cocoa in each chocolate bar.   
-```{r}
+```{r, message=FALSE, warning=FALSE}
 ggplot(cocoa, aes(x = cocoa_percent)) +
       geom_histogram(color = "black", fill = "red", binwidth = 3) +
       scale_y_continuous(breaks = seq(0,800,50)) +
@@ -83,7 +80,7 @@ n1 <- cocoa %>% group_by(company) %>% summarise(count = n()) %>% arrange(desc(co
    
 There are `r nrow(n1)` unique companies in this dataset, lets look at the the 20 companies with the most ratings. Below is a graph of the 20 companies that have the most chocolate ratings.    
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 n2 <- cocoa %>% group_by(company) %>% 
                 summarise(count = n()) %>% 
                 arrange(desc(count)) %>%
@@ -104,7 +101,7 @@ n3 <- cocoa %>% group_by(company_location) %>%
 ```   
 
 There are chocolate companies on this list from `r nrow(n3)` different counties. The 20 most represented company location are.   
-```{r}
+```{r, message=FALSE, warning=FALSE}
 n3 <- cocoa %>% group_by(company_location) %>% 
                 summarise(count = n()) %>% 
                 arrange(desc(count)) %>%
@@ -119,7 +116,31 @@ ggplot(n3, aes(x = reorder(company_location, count),
                       coord_flip()
 ```   
 
-That is interesting the United States is while represnted in this dataset. I thought Switzerland, Germany and Belgium would have more chocolate bars rated.   
+That is interesting the United States is while represnted in this dataset. I thought Switzerland, Germany and Belgium would have more chocolate bars rated. Lets take a quick look at a map of these locations.
+```{r, message=FALSE, warning=FALSE}
+#Import dataset of latitudes and longitudes for world capitals 
+lat_lon <- read.csv("country_lat_lon.txt") 
+
+company_map <- left_join(cocoa, lat_lon, by = c("company_location" = "Country")) %>% select(-c(Capital))
+
+n4 <- company_map %>% filter(!is.na(company_location), !is.na(Latitude)) %>%
+                      group_by(company_location, Latitude, Longitude) %>% 
+                      summarise(count = n()) %>% 
+                      arrange(desc(count)) 
+
+# Get world map
+world_map <- map_data("world")
+
+# Draw the map and add the data points in myData
+
+ggplot() +
+geom_path(data = world_map, aes(x = long, y = lat, group = group)) +
+geom_point(data = n4, aes(x = Longitude, y = Latitude, size = count), color = "red") +
+ggtitle("Locations of Chocolate Companies") +
+theme(plot.title=element_text(size=20))
+```
+
+
    
       
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
@@ -128,7 +149,7 @@ n4 <- cocoa %>% group_by(bean_origin_country) %>%
 ```    
    
 Cocoa beans are growen in `r nrow(n4)` different counties in this dataset the top 20 countries represented are.
-```{r}
+```{r, message=FALSE, warning=FALSE}
 n4 <- cocoa %>% filter(!is.na(bean_origin_country)) %>%
                 group_by(bean_origin_country) %>% 
                 summarise(count = n()) %>% 
@@ -146,11 +167,17 @@ ggplot(n4, aes(x = reorder(bean_origin_country, count),
    
 8 of the top 10 are in South & central America. I have a dataset that I can join to this one that has the Latitudes and logitudes for the capital of each country around the world. THis will allow me to map some of this data.   
   
-```{r}
-n5 <- cocoa %>% filter(!is.na(bean_origin_country), !is.na(Latitude)) %>%
-                group_by(bean_origin_country, Latitude, Longitude) %>% 
-                summarise(count = n()) %>% 
-                arrange(desc(count)) 
+```{r, message=FALSE, warning=FALSE}
+#Import dataset of latitudes and longitudes for world capitals 
+lat_lon <- read.csv("country_lat_lon.txt") 
+
+origin_map <- left_join(cocoa, lat_lon, by = c("bean_origin_country" = "Country")) %>% select(-c(Capital))
+
+
+n5 <- origin_map %>% filter(!is.na(bean_origin_country), !is.na(Latitude)) %>%
+                     group_by(bean_origin_country, Latitude, Longitude) %>% 
+                     summarise(count = n()) %>% 
+                     arrange(desc(count)) 
 
 # Get world map
 world_map <- map_data("world")
@@ -159,8 +186,11 @@ world_map <- map_data("world")
 
 ggplot() +
 geom_path(data = world_map, aes(x = long, y = lat, group = group)) +
-geom_point(data = n5, aes(x = Longitude, y = Latitude, size = count), color = "red")
-```
+geom_point(data = n5, aes(x = Longitude, y = Latitude, size = count), color = "red") +
+ggtitle("Origin of Cocoa Beans") +
+theme(plot.title=element_text(size=20))
+```   
+
 
 
 
