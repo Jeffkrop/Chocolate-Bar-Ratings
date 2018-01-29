@@ -417,7 +417,7 @@ ggplot(n7, aes(x = reorder(bean_type, count),
                y = count, fill = bean_type)) + 
                       geom_bar(stat = "identity")  +
                       geom_text(aes(label = count), vjust = 1, hjust = .5) + 
-                      labs(x = "Companies", y = "Number of Ratings", title = "Where Are The Cocoa Beans Grown") +
+                      labs(x = "Cocoa Varieties", y = "Number of Time Cocoa is Used", title = "What Cocoa Varieties Are Used") +
                       theme(legend.position = "none") +
                       coord_flip()
 ```
