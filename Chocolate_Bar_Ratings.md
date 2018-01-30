@@ -1,6 +1,6 @@
 Chocolate-Bar-Ratings
 ================
-2018-01-29
+2018-01-30
 
 This is a dataset of 1,700 individual chocolate bars. This dataset has information on their regional origin, percentage of cocoa, the variety of chocolate bean used and where the beans were grown. I think it would be fun to use some R code to take a look at what chocolate bar gets the highest rating over the years, what countries has the highest rated bars and what goes into getting a highly rated chocolate bar.
 
@@ -431,7 +431,7 @@ I did some research on the 3 types of cocoa bean in this dataset, the Trinitario
 **Criollo** is a rare tree that is native to Central and South America as well as the Caribbean islands and Sri Lanka. Only 5% of the world’s production is Criollo. This makes up 17.77% of the bars in this dataset
 Source ("<https://www.barry-callebaut.com/about-us/media/press-kit/history-chocolate/theobroma-cacao-food-gods>")
 
-**Trinitario** is a natural hybrid biological class resulting from cross-pollination. Legend recounts that it first came into existence on the Island of Trinidad, after a hurricane nearly completely destroyed the local Criollo crops in 1727. Assuming all the trees were dead, the plantations were replanted with Forastero, but spontaneous hybrids appeared. The Trinitario cocoa is the main cocoa in 48.66%
+**Trinitario** is a natural hybrid biological class resulting from cross-pollination. Legend recounts that it first came into existence on the Island of Trinidad, after a hurricane nearly completely destroyed the local Criollo crops in 1727. Assuming all the trees were dead, the plantations were replanted with Forastero, but spontaneous hybrids appeared. The Trinitario cocoa is the main cocoa in 48.66% of this dataset.
 Source ("<https://www.barry-callebaut.com/about-us/media/press-kit/history-chocolate/theobroma-cacao-food-gods>")
 
 **Forastero** is the most commonly cocoa grown. It is most likely native to the Amazon basin. Today, Forastero is mainly grown in Africa, Ecuador and Brazil and accounts for 80% of the world’s cocoa supply. What makes it so popular is that it is much hardier and less susceptible to diseases. It has a much higher yield than the Criollo variety. Forastero cocoa has purple-colored beans and is mainly used to give chocolate its full-bodied flavor. The Trinitario cocoa is the main cocoa in 10.1%
@@ -448,4 +448,100 @@ Source (<https://missionchocolate.com/blogs/travel-blog/63223939-fazenda-venturo
 **Criollo (Porcelana)** cocoa is the world’s most coveted of cocoa varieties due to its refined flavor profile, a perfect balance of acidity/fruit and lower levels of astringency and bitterness. Notes of nuts, caramel and slight spice are evident, with a buttery texture.
 Source (<http://www.chocolatetradingco.com/magazine/features/porcelana>)
 
-With a good idea of what i have in this dataset from the graphs and maps above: cocoa ratings, percent of cocoa in each bar, companies with the most ratings, company locations, locations cocoa beans are grown, number of ratings per year and bean type. I would like to see what makes a high rated chocolate bar, I will look at companies location, bean origin country, percent cocoa in the bar, bean type and rating year.
+###### With a good idea of what I have in this dataset from the graphs and maps above: cocoa ratings, percent of cocoa in each bar, companies with the most ratings, company locations, locations cocoa beans are grown, number of ratings per year and bean type. I would like to see what goes into making a high rated chocolate bar? I will look at companies location, bean origin country, percent cocoa in the bar, bean type and rating year to see if there is anything that stands out.
+
+#### I will start by looking at the top rated bars, see if there is anything the bars with a rating of 4 or more have in comman.
+
+``` r
+n8.5 <- cocoa %>% filter(Rating >= 4.0)
+
+n8 <- cocoa %>% filter(Rating >= 4.0) %>% 
+                group_by(bean_type) %>% 
+                summarise(count = n()) %>% 
+                arrange(desc(count)) %>% 
+                top_n(8, wt = count)
+
+ggplot(n8, aes(x = reorder(bean_type, count),
+               y = count, fill = bean_type)) + 
+                      geom_bar(stat = "identity")  +
+                      geom_text(aes(label = count), vjust = 1, hjust = .5) + 
+                      labs(x = "Cocoa Varieties", y = "Number of Time Cocoa is Used", title = "Cocoa Varieties Used In Bars With Rating Over 4") +
+                      theme(legend.position = "none") +
+                      coord_flip()
+```
+
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
+
+There are 100 bars with a rating over 4, there are only 2 bars that have a rating of 5. Bars with rating greater than 4 make up 5.571% of the cocoa dataset. The disipointing thing is this is a small subset of data with 35% being NA and the largest subset it is hard to say what bean type makes a great chocolate bar. 28% us the Trinitario cocoa which is the hybrid of Criollo and Forastero and as seen above the most used cocoa in the whole dataset. The criollo cocoa is rare but is used in nearly 18% of chocolate in this dataset and 15% with a rating over 4. Interesting that there are only 3 bars with a rating over 4 that use what some say is the world’s most coveted of cocoa, the Criollo Porcelana.
+
+#### What about the the country where the bean is grown does that help get a higher rating?
+
+``` r
+lat_lon <- read.csv("country_lat_lon.txt") 
+origin_map <- left_join(cocoa, lat_lon, by = c("bean_origin_country" = "Country")) %>% select(-c(Capital))
+
+n9 <- origin_map %>% filter(Rating >= 4.0) %>% 
+                group_by(bean_origin_country, Latitude, Longitude) %>% 
+                filter(!is.na(bean_origin_country), !is.na(Longitude)) %>%
+                summarise(count = n()) %>% 
+                arrange(desc(count))   
+   
+# Draw the map and add the data points in myData
+ggplot() +
+geom_path(data = world_map, aes(x = long, y = lat, group = group)) +
+geom_point(data = n9, aes(x = Longitude, y = Latitude, size = count), color = "red") +
+labs("Origin of Cocoa Beans", x = "Longitude", y = "Latitude") +
+theme(plot.title=element_text(size=20))
+```
+
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
+
+``` r
+ggplot(n9, aes(x = reorder(bean_origin_country, count),
+               y = count, fill = bean_origin_country)) + 
+                      geom_bar(stat = "identity")  +
+                      geom_text(aes(label = count), vjust = 1, hjust = .5) + 
+                      labs(x = "Cocoa Varieties", y = "Count", title = "Bean Origin Country Used In Bars With Rating Over 4") +
+                      theme(legend.position = "none") +
+                      coord_flip()
+```
+
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-2.png)
+
+Looking at the map most of the best rated chocolate bars use cocoa from Central and South America. There is not one standout country but Madagascar and Papua New Guinea are not in South America. Bars that use a blend of cocoa are taken out of this subset as the cocoa could have come from more than one country.
+
+##### I want to make a map and graph of countries where the companies are located.
+
+``` r
+lat_lon <- read.csv("country_lat_lon.txt") 
+origin_map <- left_join(cocoa, lat_lon, by = c("company_location" = "Country")) %>% select(-c(Capital))
+
+n10 <- origin_map %>% filter(Rating >= 4.0) %>% 
+                group_by(company_location, Latitude, Longitude) %>% 
+                filter(!is.na(company_location), !is.na(Longitude)) %>%
+                summarise(count = n()) %>% 
+                arrange(desc(count))   
+   
+# Draw the map and add the data points in myData
+ggplot() +
+geom_path(data = world_map, aes(x = long, y = lat, group = group)) +
+geom_point(data = n10, aes(x = Longitude, y = Latitude, size = count), color = "red") +
+labs("Company Locataion", x = "Longitude", y = "Latitude") +
+theme(plot.title=element_text(size=20))
+```
+
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
+
+``` r
+ggplot(n10, aes(x = reorder(company_location, count),
+               y = count, fill = company_location)) + 
+                      geom_bar(stat = "identity")  +
+                      geom_text(aes(label = count), vjust = 1, hjust = .5) + 
+                      labs(x = "Country", y = "Count", title = "Company Location For Bars With Rating Over 4") +
+                      theme(legend.position = "none") +
+                      coord_flip()
+```
+
+![](Chocolate_Bar_Ratings_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-2.png)
+
+The United States has the most bars in this dataset followed closely by France than with less than half is Canada. It is interesting that one company is in Madagascar I wonder if they use cocoa that is also grown in Madagascar.
